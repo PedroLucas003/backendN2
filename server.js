@@ -7,15 +7,23 @@ const app = express();
 
 // Configurações básicas
 app.use(cors());
+app.use(cors({
+  origin: [
+    'http://projeto-n2-aws.s3-website-us-east-1.amazonaws.com',
+    'http://localhost:3000' // para desenvolvimento local
+  ],
+  credentials: true
+}));
 app.use(express.json());
 
 // Conexão com o MongoDB
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/nback', {
+// Conexão com o MongoDB
+mongoose.connect(process.env.MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true
 })
-.then(() => console.log('✅ Conectado ao MongoDB'))
-.catch(err => console.error('❌ Erro na conexão:', err));
+.then(() => console.log('✅ Conectado ao MongoDB Atlas'))
+.catch(err => console.error('❌ Erro na conexão com o Atlas:', err));
 
 // Rotas
 app.use('/api/auth', require('./routes/auth'));
