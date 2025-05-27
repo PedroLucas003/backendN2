@@ -18,12 +18,12 @@ app.use(express.json());
 
 // Conexão com o MongoDB
 // Conexão com o MongoDB
-mongoose.connect(process.env.MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-})
-.then(() => console.log('✅ Conectado ao MongoDB Atlas'))
-.catch(err => console.error('❌ Erro na conexão com o Atlas:', err));
+mongoose.connect(process.env.MONGODB_URI)
+  .then(() => console.log('✅ Conectado ao MongoDB Atlas'))
+  .catch(err => {
+    console.error('❌ Falha na conexão com o MongoDB:', err.message);
+    process.exit(1); // Encerra o aplicativo com erro
+  });
 
 // Rotas
 app.use('/api/auth', require('./routes/auth'));
