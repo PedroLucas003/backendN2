@@ -3,10 +3,7 @@ const Beer = require('../models/Beer');
 const router = express.Router();
 const auth = require('../middleware/auth'); // Importa o middleware JWT já configurado
 
-// Remova completamente a declaração local de auth que estava aqui
-// Pois você já está importando o middleware correto
-
-// Listar todas as cervejas (pública temporariamente)
+// Listar todas as cervejas
 router.get('/', async (req, res) => {
   try {
     const beers = await Beer.find();
@@ -16,7 +13,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Rotas protegidas (agora usando o middleware JWT real)
+// Rotas protegidas 
 router.use(auth);
 
 // Adicionar nova cerveja

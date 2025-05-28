@@ -1,7 +1,7 @@
 const express = require('express');
 const User = require('../models/User');
 const router = express.Router();
-const auth = require('../middleware/auth'); // <- Caminho correto do middleware
+const auth = require('../middleware/auth'); 
 
 // Listar todos os usuários (apenas admin)
 router.get('/', auth, async (req, res) => {
