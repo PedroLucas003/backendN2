@@ -8,6 +8,7 @@ const app = express();
 // Configuração CORS atualizada
 app.use(cors({
   origin: [
+    'http://projeto-n2-aws.s3-website-us-east-1.amazonaws.com', // Nova URL do frontend na AWS
     'https://frontendn2.vercel.app',
     'http://localhost:3000'
   ],
