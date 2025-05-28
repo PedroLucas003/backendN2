@@ -72,6 +72,7 @@ DELETE	/api/beers/:id	Remove cerveja
 Método	Endpoint	Descrição
 GET	/api/users	Lista todos usuários
 DELETE	/api/users/:id	Remove usuário
+
 🏗️ Estrutura do Projeto
 backend-cervejaria/
 ├── config/            # Configurações do app
