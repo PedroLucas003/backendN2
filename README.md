@@ -34,7 +34,7 @@ API robusta para o sistema de gerenciamento de cervejas artesanais com:
 ```bash
 # Clone o repositório
 git clone https://github.com/PedroLucas003/backend-cervejaria.git
-cd backend-cervejaria
+cd backend
 
 # Instale as dependências
 npm install
@@ -47,7 +47,6 @@ MONGODB_URI=mongodb+srv://user:password@cluster.mongodb.net/dbname?retryWrites=t
 
 # Autenticação
 JWT_SECRET=seu_super_segredo_aqui
-JWT_EXPIRES_IN=1h
 
 # Servidor
 PORT=5000
