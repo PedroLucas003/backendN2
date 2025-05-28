@@ -2,16 +2,14 @@ require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const path = require('path'); // Adicionado para suporte AWS
 
 const app = express();
 
-// Configuração CORS atualizada com o endpoint AWS
+// Configuração CORS atualizada
 app.use(cors({
   origin: [
     'https://frontendn2.vercel.app',
-    'http://localhost:3000',
-    'http://projeto-n2-aws.s3-website-us-east-1.amazonaws.com' // Adicionado seu endpoint AWS
+    'http://localhost:3000'
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE']
@@ -19,7 +17,7 @@ app.use(cors({
 
 app.use(express.json());
 
-// Conexão com MongoDB (mantida igual)
+// Conexão com MongoDB com tratamento melhorado
 mongoose.connect(process.env.MONGODB_URI, {
   serverSelectionTimeoutMS: 5000,
   socketTimeoutMS: 45000
@@ -30,12 +28,12 @@ mongoose.connect(process.env.MONGODB_URI, {
   process.exit(1);
 });
 
-// Rotas (mantidas iguais)
+// Rotas
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/beers', require('./routes/beers'));
 app.use('/api/users', require('./routes/users'));
 
-// Rota de saúde (mantida igual)
+// Rota de saúde com timeout
 app.get('/api/health', (req, res) => {
   req.setTimeout(10000);
   res.json({ 
@@ -45,24 +43,13 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Configuração específica para AWS (única adição necessária)
-if (process.env.NODE_ENV === 'production') {
-  // Servir arquivos estáticos do frontend se necessário
-  app.use(express.static(path.join(__dirname, 'public')));
-  
-  // Rota para o frontend
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
-  });
-}
-
-// Tratamento de erros global (mantido igual)
+// Tratamento de erros global
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ error: 'Erro interno do servidor' });
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, '0.0.0.0', () => { // Modificado para ouvir em todos os IPs
+app.listen(PORT, () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
 });
