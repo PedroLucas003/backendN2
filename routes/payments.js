@@ -4,14 +4,13 @@ const router = express.Router();
 const auth = require('../middleware/auth');
 const Order = require('../models/Order');
 
-// Configuração do Mercado Pago
+// Configuração segura do Mercado Pago
 mercadopago.configure({
-  access_token: process.env.REACT_APP_MP_ACCESS_TOKEN || 'APP_USR-1033194409526725-052912-384749a140d7670bc8e8bd57e1bff0c8-585645372',
-  client_id: '1033194409526725',
-  client_secret: 'Va0aykNKw8UQBzx27Ct89PVzP73hIaAe',
-  sandbox: process.env.NODE_ENV !== 'production',
-  integrator_id: 'dev_24c65fb163bf11ea96500242ac130004'
+  access_token: process.env.MP_ACCESS_TOKEN,
+  integrator_id: process.env.MP_INTEGRATOR_ID,
+  sandbox: process.env.NODE_ENV !== 'production'
 });
+
 
 // Middleware para verificar webhook
 const verifyWebhook = (req, res, next) => {
@@ -20,8 +19,7 @@ const verifyWebhook = (req, res, next) => {
     return res.status(401).send('Assinatura não fornecida');
   }
   
-  const expectedSignature = 'd85703ab22d1fae4b343111d12ae7d801346668c950c903310fceac84011af4f';
-  if (signature !== expectedSignature) {
+  if (signature !== process.env.WEBHOOK_SECRET) {
     return res.status(401).send('Assinatura inválida');
   }
   
