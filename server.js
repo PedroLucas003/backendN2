@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const paymentRoutes = require('./routes/payments');
 
 const app = express();
 
@@ -33,6 +34,7 @@ mongoose.connect(process.env.MONGODB_URI, {
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/beers', require('./routes/beers'));
 app.use('/api/users', require('./routes/users'));
+app.use('/api/payments', paymentRoutes);
 
 // Rota de saúde com timeout
 app.get('/api/health', (req, res) => {
