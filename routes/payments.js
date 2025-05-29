@@ -7,7 +7,6 @@ const Order = require('../models/Order');
 // Configuração segura do Mercado Pago
 mercadopago.configure({
   access_token: process.env.MP_ACCESS_TOKEN,
-  integrator_id: process.env.MP_INTEGRATOR_ID,
   sandbox: process.env.NODE_ENV !== 'production'
 });
 
