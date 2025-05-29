@@ -4,26 +4,11 @@ const router = express.Router();
 const auth = require('../middleware/auth');
 const Order = require('../models/Order');
 
-// Configuração segura do Mercado Pago
+// Configuração do Mercado Pago
 mercadopago.configure({
   access_token: process.env.MP_ACCESS_TOKEN,
   sandbox: process.env.NODE_ENV !== 'production'
 });
-
-
-// Middleware para verificar webhook
-const verifyWebhook = (req, res, next) => {
-  const signature = req.headers['x-signature'];
-  if (!signature) {
-    return res.status(401).send('Assinatura não fornecida');
-  }
-  
-  if (signature !== process.env.WEBHOOK_SECRET) {
-    return res.status(401).send('Assinatura inválida');
-  }
-  
-  next();
-};
 
 // Rota para criar preferência
 router.post('/create-preference', auth, async (req, res) => {
@@ -31,8 +16,8 @@ router.post('/create-preference', auth, async (req, res) => {
     const { items, deliveryData, shippingOption } = req.body;
     const user = req.user;
 
-    if (!items || !Array.isArray(items)) {
-      return res.status(400).json({ error: 'Itens inválidos' });
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ error: 'Carrinho vazio ou inválido' });
     }
 
     const mpItems = items.map(item => ({
@@ -98,8 +83,39 @@ router.post('/create-preference', auth, async (req, res) => {
   }
 });
 
-// Webhook
-router.post('/webhook', verifyWebhook, async (req, res) => {
+// Rota para verificar status do pedido
+router.get('/order-status/:preferenceId', auth, async (req, res) => {
+  try {
+    const order = await Order.findOne({
+      mpPreferenceId: req.params.preferenceId,
+      user: req.user.userId
+    });
+
+    if (!order) {
+      return res.status(404).json({ error: 'Pedido não encontrado' });
+    }
+
+    if (order.status === 'pending' && order.mpPaymentId) {
+      const payment = await mercadopago.payment.get(order.mpPaymentId);
+      order.status = payment.body.status;
+      
+      if (payment.body.status !== 'pending') {
+        await order.save();
+      }
+    }
+
+    res.json({
+      status: order.status,
+      orderDetails: order
+    });
+  } catch (error) {
+    console.error('Erro:', error);
+    res.status(500).json({ error: 'Erro ao buscar status' });
+  }
+});
+
+// Webhook para notificações do Mercado Pago
+router.post('/webhook', async (req, res) => {
   try {
     const { action, data } = req.body;
     
@@ -120,40 +136,6 @@ router.post('/webhook', verifyWebhook, async (req, res) => {
   } catch (error) {
     console.error('Erro no webhook:', error);
     res.status(500).send('Erro ao processar webhook');
-  }
-});
-
-// Rota para verificar status
-router.get('/order-status/:preferenceId', auth, async (req, res) => {
-  try {
-    const order = await Order.findOne({
-      mpPreferenceId: req.params.preferenceId,
-      user: req.user.userId
-    });
-
-    if (!order) {
-      return res.status(404).json({ error: 'Pedido não encontrado' });
-    }
-
-    if (order.status === 'pending' && order.mpPaymentId) {
-      const payment = await mercadopago.payment.get(order.mpPaymentId);
-      order.status = payment.body.status;
-      
-      if (payment.body.status !== 'pending') {
-        await Order.updateOne(
-          { _id: order._id },
-          { status: payment.body.status }
-        );
-      }
-    }
-
-    res.json({
-      status: order.status,
-      orderDetails: order
-    });
-  } catch (error) {
-    console.error('Erro:', error);
-    res.status(500).json({ error: 'Erro ao buscar status' });
   }
 });
 

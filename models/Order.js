@@ -36,6 +36,16 @@ const orderSchema = new mongoose.Schema({
     default: 'pending'
   },
   total: Number
-}, { timestamps: true });
+}, { 
+  timestamps: true,
+  toJSON: {
+    virtuals: true,
+    transform: (doc, ret) => {
+      delete ret.__v;
+      delete ret._id;
+      return ret;
+    }
+  }
+});
 
 module.exports = mongoose.model('Order', orderSchema);
