@@ -6,7 +6,7 @@ const Order = require('../models/Order');
 
 // Configuração do Mercado Pago
 mercadopago.configure({
-  access_token: 'APP_USR-1033194409526725-052912-384749a140d7670bc8e8bd57e1bff0c8-585645372',
+  access_token: process.env.REACT_APP_MP_ACCESS_TOKEN || 'APP_USR-1033194409526725-052912-384749a140d7670bc8e8bd57e1bff0c8-585645372',
   client_id: '1033194409526725',
   client_secret: 'Va0aykNKw8UQBzx27Ct89PVzP73hIaAe',
   sandbox: process.env.NODE_ENV !== 'production',
