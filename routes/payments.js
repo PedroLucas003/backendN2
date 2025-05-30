@@ -4,13 +4,10 @@ const auth = require('../middleware/auth');
 const Order = require('../models/Order');
 const mercadopago = require('mercadopago');
 
-// Configuração correta do Mercado Pago
+// Configuração do Mercado Pago
 mercadopago.configure({
   access_token: process.env.MP_ACCESS_TOKEN,
-  options: {
-    timeout: 5000,
-    integrator_id: process.env.MP_INTEGRATOR_ID
-  }
+  options: { timeout: 5000 }
 });
 
 router.post('/create-preference', auth, async (req, res) => {
@@ -23,14 +20,15 @@ router.post('/create-preference', auth, async (req, res) => {
       return res.status(400).json({ error: 'Carrinho vazio' });
     }
 
-    if (!deliveryData?.cep) {
-      return res.status(400).json({ error: 'CEP é obrigatório' });
+    if (!deliveryData?.cep || !deliveryData.address || !deliveryData.number) {
+      return res.status(400).json({ error: 'Dados de entrega incompletos' });
     }
 
     // Cálculos
     const itemPrice = 15.90;
     const itemsTotal = items.reduce((total, item) => total + (itemPrice * item.quantity), 0);
-    const orderTotal = itemsTotal.toFixed(2);
+    const shippingCost = 15.00; // Valor fixo de frete
+    const orderTotal = (itemsTotal + shippingCost).toFixed(2);
 
     // Configuração da preferência
     const preference = {
@@ -46,9 +44,13 @@ router.post('/create-preference', auth, async (req, res) => {
         email: user.email || "cliente@cervejariavirada.com",
         address: {
           zip_code: deliveryData.cep.replace(/\D/g, ''),
-          street_name: deliveryData.address?.substring(0, 100) || '',
-          street_number: deliveryData.number?.substring(0, 10) || 'S/N',
+          street_name: deliveryData.address.substring(0, 100),
+          street_number: parseInt(deliveryData.number) || 1,
         }
+      },
+      shipments: {
+        cost: parseFloat(shippingCost),
+        mode: "not_specified"
       },
       back_urls: {
         success: `${process.env.FRONTEND_URL}/order-success`,
@@ -72,6 +74,12 @@ router.post('/create-preference', auth, async (req, res) => {
         quantity: item.quantity
       })),
       deliveryData,
+      shippingOption: {
+        Codigo: 'FIXO',
+        Valor: shippingCost.toFixed(2),
+        PrazoEntrega: '5',
+        nome: 'Frete Fixo'
+      },
       mpPreferenceId: response.body.id,
       status: 'pending',
       total: orderTotal,
@@ -95,7 +103,7 @@ router.post('/create-preference', auth, async (req, res) => {
   }
 });
 
-// Rotas auxiliares
+// Rota auxiliar para verificar status
 router.get('/order-status/:preferenceId', auth, async (req, res) => {
   try {
     const order = await Order.findOne({
