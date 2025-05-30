@@ -4,9 +4,26 @@ const beerSchema = new mongoose.Schema({
   beerType: {
     type: String,
     required: true,
-    enum: ['Pilsen', 'IPA', 'Stout', 'Weiss']
+    unique: true
+  },
+  description: {
+    type: String,
+    required: true
+  },
+  alcoholContent: {
+    type: String,
+    required: true
+  },
+  yearCreated: {
+    type: String,
+    required: true
   },
   quantity: {
+    type: Number,
+    required: true,
+    min: 0
+  },
+  price: {
     type: Number,
     required: true,
     min: 0
