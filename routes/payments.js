@@ -2,17 +2,20 @@ const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
 const Order = require('../models/Order');
-const { MercadoPagoConfig, Preference } = require('mercadopago');
+const mercadopago = require('mercadopago');
 
-// Configuração simplificada do Mercado Pago
-const client = new MercadoPagoConfig({
-  accessToken: process.env.MP_ACCESS_TOKEN,
-  options: { timeout: 5000 },
+// Configuração correta do Mercado Pago
+mercadopago.configure({
+  access_token: process.env.MP_ACCESS_TOKEN,
+  options: {
+    timeout: 5000,
+    integrator_id: process.env.MP_INTEGRATOR_ID
+  }
 });
 
 router.post('/create-preference', auth, async (req, res) => {
   try {
-    const { items, deliveryData, shippingOption } = req.body;
+    const { items, deliveryData } = req.body;
     const user = req.user;
 
     // Validações básicas
@@ -27,17 +30,14 @@ router.post('/create-preference', auth, async (req, res) => {
     // Cálculos
     const itemPrice = 15.90;
     const itemsTotal = items.reduce((total, item) => total + (itemPrice * item.quantity), 0);
-    const shippingCost = parseFloat(shippingOption.Valor.replace(',', '.')) || 0;
-    const orderTotal = parseFloat((itemsTotal + shippingCost).toFixed(2));
+    const orderTotal = itemsTotal.toFixed(2);
 
     // Configuração da preferência
-    const preference = new Preference(client);
-    
-    const preferenceData = {
+    const preference = {
       items: items.map((item, index) => ({
         id: index + 1,
         title: item.nome.substring(0, 250),
-        unit_price: itemPrice,
+        unit_price: parseFloat(itemPrice),
         quantity: item.quantity,
         description: item.tipo.substring(0, 250),
         picture_url: item.imagem || 'https://via.placeholder.com/100x150.png?text=Cerveja+Virada',
@@ -59,7 +59,7 @@ router.post('/create-preference', auth, async (req, res) => {
       external_reference: `ORDER_${Date.now()}_${user.userId}`,
     };
 
-    const response = await preference.create({ body: preferenceData });
+    const response = await mercadopago.preferences.create(preference);
 
     // Salvar pedido no banco de dados
     const order = new Order({
@@ -72,19 +72,18 @@ router.post('/create-preference', auth, async (req, res) => {
         quantity: item.quantity
       })),
       deliveryData,
-      shippingOption,
-      mpPreferenceId: response.id,
+      mpPreferenceId: response.body.id,
       status: 'pending',
       total: orderTotal,
-      externalReference: preferenceData.external_reference
+      externalReference: preference.external_reference
     });
 
     await order.save();
 
     res.json({
-      id: response.id,
-      init_point: response.init_point,
-      sandbox_init_point: response.sandbox_init_point,
+      id: response.body.id,
+      init_point: response.body.init_point,
+      sandbox_init_point: response.body.sandbox_init_point,
     });
 
   } catch (error) {
@@ -96,7 +95,7 @@ router.post('/create-preference', auth, async (req, res) => {
   }
 });
 
-// Rotas auxiliares (mantidas do original)
+// Rotas auxiliares
 router.get('/order-status/:preferenceId', auth, async (req, res) => {
   try {
     const order = await Order.findOne({
