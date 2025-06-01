@@ -2,6 +2,7 @@ const express = require('express');
 const Beer = require('../models/Beer');
 const router = express.Router();
 const auth = require('../middleware/auth');
+const adminAuth = require('../middleware/adminAuth');
 
 // Listar todas as cervejas (público)
 router.get('/', async (req, res) => {
@@ -15,6 +16,7 @@ router.get('/', async (req, res) => {
 
 // Rotas protegidas
 router.use(auth);
+router.use(adminAuth);
 
 // Adicionar nova cerveja
 router.post('/', async (req, res) => {
