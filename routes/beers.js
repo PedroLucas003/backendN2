@@ -14,12 +14,8 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Rotas protegidas
-router.use(auth);
-router.use(adminAuth);
-
-// Adicionar nova cerveja
-router.post('/', async (req, res) => {
+// Rotas protegidas que requerem autenticação e privilégios de admin
+router.post('/', auth, adminAuth, async (req, res) => {
   try {
     const { beerType, description, alcoholContent, yearCreated, quantity, price } = req.body;
     
@@ -42,8 +38,7 @@ router.post('/', async (req, res) => {
   }
 });
 
-// Atualizar cerveja
-router.put('/:id', async (req, res) => {
+router.put('/:id', auth, adminAuth, async (req, res) => {
   try {
     const beer = await Beer.findByIdAndUpdate(
       req.params.id,
@@ -57,8 +52,7 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// Deletar cerveja
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', auth, adminAuth, async (req, res) => {
   try {
     const beer = await Beer.findByIdAndDelete(req.params.id);
     if (!beer) return res.status(404).json({ error: 'Cerveja não encontrada' });

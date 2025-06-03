@@ -1,7 +1,5 @@
 const jwt = require('jsonwebtoken');
 
-const ADMIN_EMAIL = 'admin@exemplo.com';
-
 module.exports = (req, res, next) => {
   const authHeader = req.headers.authorization;
 
@@ -14,8 +12,8 @@ module.exports = (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret');
     
-    if (decoded.email !== ADMIN_EMAIL) {
-      return res.status(403).json({ error: 'Acesso não autorizado' });
+    if (!decoded.isAdmin) {
+      return res.status(403).json({ error: 'Acesso não autorizado - Requer privilégios de administrador' });
     }
     
     req.user = decoded;
